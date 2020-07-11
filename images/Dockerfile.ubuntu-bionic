@@ -1,0 +1,47 @@
+ARG FROM=ubuntu:18.04
+FROM ${FROM}
+
+LABEL org.opencontainers.image.authors="deluxebrain <the@deluxebrain.com>" \
+      org.opencontainers.image.licenses='MIT' \
+      org.opencontainers.image.source="https://https://github.com/deluxebrain/docker-ansible" \
+      org.opencontainers.image.url="https://deluxebrain.com" \
+      org.opencontainers.image.vendor="deluxebrain"
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get install -yq --no-install-recommends \
+        apt-utils \
+        locales \
+        python3 \
+        python3-apt \
+        python3-setuptools \
+        python3-pip \
+        software-properties-common \
+        curl \
+        gnupg-agent \
+        sudo \
+        bash \
+        ca-certificates \
+        iproute2 && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /usr/share/doc && \
+    rm -rf /usr/share/man && \
+    apt-get clean
+
+RUN locale-gen en_US.UTF-8
+
+COPY files/docker/systemctl3.py /usr/bin/systemctl
+RUN test -L /bin/systemctl || ln -sf /usr/bin/systemctl /bin/systemctl
+
+RUN pip3 install --upgrade pip
+RUN pip3 install ansible
+
+RUN mkdir -p /etc/ansible # && \
+RUN /etc/ansible/hosts < echo -e "\
+[local]\n\
+localhost ansible_connection=local"
+
+CMD ["/usr/bin/systemctl"]
